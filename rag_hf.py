@@ -1,7 +1,7 @@
-# rag_interface.py
+# rag_interface.py (with numpy instead of faiss)
 import streamlit as st
 import pickle
-import faiss
+import numpy as np
 import rdflib
 import torch
 import datetime
@@ -72,29 +72,30 @@ st.markdown("""
 def load_all_components():
     embedder = SentenceTransformer(EMBEDDING_MODEL, device=DEVICE)
     methods = {}
-    for label, suffix, ttl in [
-        ("Standard", "", "grafo_ttl_no_hibrido.ttl"),
-        ("Hybrid", "_hybrid", "grafo_ttl_hibrido.ttl"),
-        ("GraphSAGE", "_hybrid_graphsage", "grafo_ttl_hibrido_graphsage.ttl")
+    for label, suffix, ttl, matrix_path in [
+        ("Standard", "", "grafo_ttl_no_hibrido.ttl", "embed_matrix.npy"),
+        ("Hybrid", "_hybrid", "grafo_ttl_hibrido.ttl", "embed_matrix_hybrid.npy"),
+        ("GraphSAGE", "_hybrid_graphsage", "grafo_ttl_hibrido_graphsage.ttl", "embed_matrix_hybrid_graphsage.npy")
     ]:
         with open(f"id_map{suffix}.pkl", "rb") as f:
             id_map = pickle.load(f)
         with open(f"grafo_embed{suffix}.pickle", "rb") as f:
             G = pickle.load(f)
-        index = faiss.read_index(f"index_faiss{suffix}.faiss")
+        matrix = np.load(matrix_path)
         rdf = RDFGraph()
         rdf.parse(ttl, format="ttl")
-        methods[label] = (index, id_map, G, rdf)
+        methods[label] = (matrix, id_map, G, rdf)
     return methods, embedder
 
 methods, embedder = load_all_components()
 
 # === CORE FUNCTIONS ===
-def get_top_k(index, id_map, query, k):
+def get_top_k(matrix, id_map, query, k):
     vec = embedder.encode(f"query: {query}", convert_to_tensor=True, device=DEVICE)
-    vec = vec.cpu().numpy().astype("float32").reshape(1, -1)
-    _, indices = index.search(vec, k)
-    return [id_map[i] for i in indices[0]]
+    vec = vec.cpu().numpy().astype("float32")
+    sims = np.dot(matrix, vec) / (np.linalg.norm(matrix, axis=1) * np.linalg.norm(vec) + 1e-10)
+    top_k_idx = np.argsort(sims)[-k:][::-1]
+    return [id_map[i] for i in top_k_idx]
 
 def get_context(G, lang_id):
     node = G.nodes.get(lang_id, {})
@@ -120,8 +121,8 @@ def query_rdf(rdf, lang_id):
     except Exception as e:
         return [("error", str(e))]
 
-def generate_response(index, id_map, G, rdf, user_question, k=3):
-    ids = get_top_k(index, id_map, user_question, k)
+def generate_response(matrix, id_map, G, rdf, user_question, k=3):
+    ids = get_top_k(matrix, id_map, user_question, k)
     context = [get_context(G, i) for i in ids]
     rdf_facts = []
     for i in ids:
@@ -170,8 +171,7 @@ def main():
 
     with st.sidebar:
         st.image("https://glottolog.org/static/img/glottolog_lod.png", width=180)
-        
-        # About Section
+
         with st.container():
             st.markdown('<div class="sidebar-title">About This Tool</div>', unsafe_allow_html=True)
             st.markdown("""
@@ -188,18 +188,15 @@ def main():
                 Leverages deep graph neural networks to learn relational patterns across languages. Captures complex cultural and genealogical connections.
             </div>
             """, unsafe_allow_html=True)
-        
-        # Research Settings
+
         with st.container():
             st.markdown('<div class="sidebar-title">Research Settings</div>', unsafe_allow_html=True)
             k = st.slider("Languages to analyze per query", 1, 10, 3)
-            
             st.markdown("**Display Options:**")
             show_ids = st.checkbox("Language IDs", value=True, key="show_ids")
             show_ctx = st.checkbox("Cultural Context", value=True, key="show_ctx")
             show_rdf = st.checkbox("RDF Relations", value=True, key="show_rdf")
-        
-        # Data Source
+
         with st.container():
             st.markdown('<div class="sidebar-title">Data Sources</div>', unsafe_allow_html=True)
             st.markdown("""
