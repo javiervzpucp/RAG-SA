@@ -1,0 +1,36 @@
+
+[2025-04-09 11:01:32]
+QUERY: Which Amazonian languages are most at risk?
+STANDARD:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+
+HYBRID:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+
+GRAPH-SAGE:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+============================================================
+
+[2025-04-09 11:01:38]
+QUERY: Which Amazonian languages are most at risk?
+STANDARD:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+
+HYBRID:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+
+GRAPH-SAGE:
+Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?
+============================================================
+
+[2025-04-09 11:02:25]
+QUERY: Which Amazonian languages are most at risk?
+STANDARD:
+The Apurinã language, with fewer than 30% of its population fluent speakers and a current endangerment level of 3, is most at risk among the provided Amazonian languages. Kwaza, with a limited number of speakers (around 54) and no clear genealogical relationship with neighboring languages, and Pirahã, with an estimated number of speakers between 250 and 380, are also at risk, although they are not currently in immediate danger of extinction.
+
+HYBRID:
+The Apurinã language is most at risk, with children no longer being exposed to it and a predicted further reduction in speakers due to few fluently speaking adults and the teaching of Portuguese or Spanish instead. The Pirahã language is not in immediate danger of extinction, but it is also at risk due to a small number of speakers and the difficulty of learning the language. The Kwaza language also has a small number of speakers, and its endangerment level is not specified.
+
+GRAPH-SAGE:
+The Kwaza, Katukína-Kanamarí, and Apurinã languages appear to be at risk, as they are all considered endangered languages with a small number of speakers and a decreasing number of fluent speakers among the younger generations. In the case of Kwaza, only 25 people out of the Kwaza ethnic group of Brazil speak the language, while Katukína-Kanamarí has approximately 650 speakers and Apurinã has an estimated population of 9,500 people, but fewer than 30% of the population can speak it fluently.
+============================================================

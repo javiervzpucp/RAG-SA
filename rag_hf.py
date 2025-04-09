@@ -1,4 +1,4 @@
-# rag_interface.py (with numpy + HF Inference Endpoint)
+# rag_interface.py (with numpy instead of faiss)
 import streamlit as st
 import pickle
 import numpy as np
@@ -14,8 +14,7 @@ from dotenv import load_dotenv
 # === CONFIGURATION ===
 load_dotenv()
 
-ENDPOINT_URL = os.getenv("HF_ENDPOINT")  # ← secure endpoint URL
-HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
 EMBEDDING_MODEL = "intfloat/multilingual-e5-base"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 EX = Namespace("http://example.org/lang/")
@@ -115,7 +114,10 @@ def query_rdf(rdf, lang_id):
     SELECT ?property ?value WHERE {{ ex:{lang_id} ?property ?value }}
     """
     try:
-        return [(str(row[0]).split("/")[-1], str(row[1])) for row in rdf.query(q)]
+        return [
+            (str(row[0]).split("/")[-1], str(row[1]))
+            for row in rdf.query(q)
+        ]
     except Exception as e:
         return [("error", str(e))]
 
@@ -129,7 +131,7 @@ def generate_response(matrix, id_map, G, rdf, user_question, k=3):
 You are an expert in South American indigenous languages.
 Use strictly and only the information below to answer the user question in **English**.
 - Do not infer or assume facts that are not explicitly stated.
-- If the answer is unknown or insufficient, say \"I cannot answer with the available data.\"
+- If the answer is unknown or insufficient, say "I cannot answer with the available data."
 - Limit your answer to 100 words.
 
 
@@ -146,9 +148,9 @@ Answer:
 [/INST]"""
     try:
         res = requests.post(
-            ENDPOINT_URL,
-            headers={"Authorization": f"Bearer {HF_API_TOKEN}", "Content-Type": "application/json"},
-            json={"inputs": prompt}, timeout=60
+            f"https://api-inference.huggingface.co/models/{MODEL_ID}",
+            headers={"Authorization": f"Bearer {os.getenv('HF_API_TOKEN')}", "Content-Type": "application/json"},
+            json={"inputs": prompt}, timeout=30
         )
         out = res.json()
         if isinstance(out, list) and "generated_text" in out[0]:
